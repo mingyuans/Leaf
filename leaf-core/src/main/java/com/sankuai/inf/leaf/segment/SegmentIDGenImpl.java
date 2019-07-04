@@ -67,6 +67,7 @@ public class SegmentIDGenImpl implements IDGen {
     }
 
     private void updateCacheFromDbAtEveryMinute() {
+        //一分钟检测一次缓存;
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
@@ -85,6 +86,9 @@ public class SegmentIDGenImpl implements IDGen {
     }
 
     private void updateCacheFromDb() {
+        //yxq这里做的事情，从 DB 中取所有的 tag，一个 tab 是一个业务；
+        //然后对比当前的 cache, 补充新增的tag，移除 db 中已经没有的 tag；
+        //新增的 tag，创建 SegmentBuffer, 并且设定 current 的 max=  0,从而触发下次重新填充 buffer.
         logger.info("update cache from db");
         StopWatch sw = new Slf4JStopWatch();
         try {
@@ -158,6 +162,8 @@ public class SegmentIDGenImpl implements IDGen {
             buffer.setUpdateTimestamp(System.currentTimeMillis());
             buffer.setMinStep(leafAlloc.getStep());//leafAlloc中的step为DB中的step
         } else {
+            //yxq这里计算消费时间，标准是15分钟；如果当前消耗时间<15分钟，则把下一次的step增大两倍.
+            //这里会有一个动态计算，使一个segment 的消费时间控制在15分钟左右。
             long duration = System.currentTimeMillis() - buffer.getUpdateTimestamp();
             int nextStep = buffer.getStep();
             if (duration < SEGMENT_DURATION) {
@@ -225,6 +231,8 @@ public class SegmentIDGenImpl implements IDGen {
             } finally {
                 buffer.rLock().unlock();
             }
+            //yxq走到这里为 当前已经没有可用 并且 next 不 ready。
+            //因此这里循环等待一段时间
             waitAndSleep(buffer);
             try {
                 buffer.wLock().lock();
@@ -233,6 +241,7 @@ public class SegmentIDGenImpl implements IDGen {
                 if (value < segment.getMax()) {
                     return new Result(value, Status.SUCCESS);
                 }
+                //yxq如果下一个已经 ready，则切换 buffer，重新 while
                 if (buffer.isNextReady()) {
                     buffer.switchPos();
                     buffer.setNextReady(false);

@@ -1,6 +1,7 @@
 package com.sankuai.inf.leaf.server;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.google.cloud.spanner.*;
 import com.sankuai.inf.leaf.IDGen;
 import com.sankuai.inf.leaf.common.PropertyFactory;
 import com.sankuai.inf.leaf.common.Result;
@@ -26,16 +27,8 @@ public class SegmentService {
         boolean flag = Boolean.parseBoolean(properties.getProperty(Constants.LEAF_SEGMENT_ENABLE, "true"));
         if (flag) {
 
-
-            // Config dataSource
-            dataSource = new DruidDataSource();
-            dataSource.setUrl(properties.getProperty(Constants.LEAF_JDBC_URL));
-            dataSource.setUsername(properties.getProperty(Constants.LEAF_JDBC_USERNAME));
-            dataSource.setPassword(properties.getProperty(Constants.LEAF_JDBC_PASSWORD));
-            dataSource.init();
-
             // Config Dao
-            IDAllocDao dao = new IDAllocDaoImpl(dataSource);
+            IDAllocDao dao = getSpannerDao();
 
             // Config ID Gen
             idGen = new SegmentIDGenImpl();
@@ -59,4 +52,24 @@ public class SegmentService {
         }
         return null;
     }
+
+
+    public IDAllocDao getSpannerDao() {
+        return new IDAllocDaoSpannerImpl();
+    }
+
+
+    public IDAllocDao getMySQLDao(Properties properties) throws SQLException{
+        // Config dataSource
+        dataSource = new DruidDataSource();
+        dataSource.setUrl(properties.getProperty(Constants.LEAF_JDBC_URL));
+        dataSource.setUsername(properties.getProperty(Constants.LEAF_JDBC_USERNAME));
+        dataSource.setPassword(properties.getProperty(Constants.LEAF_JDBC_PASSWORD));
+        dataSource.init();
+
+        // Config Dao
+        IDAllocDao dao = new IDAllocDaoImpl(dataSource);
+        return dao;
+    }
+
 }

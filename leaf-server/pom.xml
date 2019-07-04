@@ -15,7 +15,10 @@
     <description>Leaf HTTP Server</description>
     <properties>
         <spring-boot-dependencies.version>1.5.18.RELEASE</spring-boot-dependencies.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <opencensus.version>0.23.0</opencensus.version>
     </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -25,8 +28,10 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -67,6 +72,43 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
+
+        <!-- gcp -->
+        <dependency>
+            <!-- Version auto-managed by BOM -->
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-spanner</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava-jdk5</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.opencensus</groupId>
+                    <artifactId>opencensus-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>20.0</version>
+        </dependency>
+
+        <!-- Version auto-managed by BOM -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-trace</artifactId>
+        </dependency>
+        <!-- Version auto-managed by BOM -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-monitoring</artifactId>
+        </dependency>
+
+
     </dependencies>
     <build>
         <plugins>
